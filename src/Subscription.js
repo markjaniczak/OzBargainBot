@@ -61,7 +61,7 @@ class Subscription {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: `<${bargain.link}|:link: ${bargain.title}>`
+                    text: `${bargain.title}\n${bargain.link}`
                 },
                 accessory: {
                     type: "image",
