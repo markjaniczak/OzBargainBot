@@ -19,8 +19,7 @@ class Subscription {
                 ]
             }
         })
-        this.getBargains()
-        this.schedule = schedule.scheduleJob("* * * * *", () => {
+        this.schedule = schedule.scheduleJob("*/10 * * * *", () => {
             this.getBargains()
         })
     }
