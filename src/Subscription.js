@@ -19,6 +19,7 @@ class Subscription {
                 ]
             }
         })
+        this.getBargains()
         this.schedule = schedule.scheduleJob("* * * * *", () => {
             this.getBargains()
         })
@@ -28,21 +29,18 @@ class Subscription {
         this.parser.parseURL(OZBARGAIN_URL)
             .then(
                 rss => {
-                    //Get latest guid
-                    const currentBargain = parseInt(rss.items[0].guid.split(" ")[0])
-                    //Check for new bargains
-                    if (currentBargain > this.data.lastBargain) {
-                        //Get a list of new bargains
-                        const newBargains = rss.items.filter(bargain =>
-                            parseInt(bargain.guid.split(" ")[0]) > this.data.lastBargain
-                        )
-                        //Send bargains to Slack
-                        this.sendBargains(newBargains)
-                        //Save latest bargain to DB
-                        this.controller.storage.channels.save({ ...this.data, lastBargain: currentBargain })
-                        //Update latest bargain in process
-                        this.data.lastBargain = currentBargain
-                    }
+                    //Get a list of new bargains
+                    const newBargains = rss.items.filter(bargain => {
+                        const guid = parseInt(bargain.guid.split(" ")[0])
+                        if (!this.data.bargains.includes(guid)) {
+                            this.data.bargains.push(guid)
+                            return true
+                        }
+                    })
+                    //Send bargains to Slack
+                    this.sendBargains(newBargains)
+                    //Save latest bargain to DB
+                    this.controller.storage.channels.save({ ...this.data, bargains: this.data.bargains })
                 })
             .catch(
                 error => console.log(error)
@@ -50,11 +48,11 @@ class Subscription {
     }
 
     sendBargains(bargains) {
-        const messagePayload = bargains.reduce((acc, cur) => {
-            acc.push(...this.createPayload(cur))
-            return acc
-        }, [])
-        this.bot.sendWebhook({ blocks: messagePayload })
+        bargains.forEach(bargain => {
+            this.bot.sendWebhook({ blocks: this.createPayload(bargain) }, (err, res) => {
+                console.log(err, res)
+            })
+        })
     }
 
     createPayload(bargain) {

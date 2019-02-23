@@ -46,6 +46,7 @@ controller.setupWebserver(process.env.PORT || 3000, function (err, webserver) {
         allData.forEach(channel => 
             subscriptions.push(new Subscription(channel, controller))
         )
+        console.log('loaded')
     })
 })
 
@@ -53,7 +54,7 @@ controller.on("create_incoming_webhook", (bot, message) => {
     const data = {
         id: message.channel_id,
         url: message.url,
-        lastBargain: -1
+        bargains: []
     }
     controller.storage.channels.save(data, err => {
         subscriptions.push(new Subscription(data, controller))
