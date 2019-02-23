@@ -1,15 +1,14 @@
 import botkit from 'botkit';
 import redis from 'botkit-storage-redis';
-import feed from 'rss-to-json';
-import schedule from 'node-schedule';
-require('dotenv').config()
+import Subscription from './Subscription';
+import dotenv from 'dotenv'
 
-if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.CLIENT_SIGNING_SECRET || !process.env.TOKEN) {
-    console.log('Error: Specify CLIENT_ID, CLIENT_SECRET, CLIENT_SIGNING_SECRET and TOKEN in environment');
+dotenv.config()
+
+if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.CLIENT_SIGNING_SECRET) {
+    console.log('Error: Specify CLIENT_ID, CLIENT_SECRET, CLIENT_SIGNING_SECRET in environment');
     process.exit(1);
 }
-
-const OZBARGAIN_URL = "https://www.ozbargain.com.au/feed/deals"
 
 const slackConfig = {
     clientId: process.env.CLIENT_ID,
@@ -28,6 +27,7 @@ if (process.env.REDIS_URL) {
 }
 
 const controller = botkit.slackbot(slackConfig)
+const subscriptions = []
 
 controller.setupWebserver(process.env.PORT || 3000, function (err, webserver) {
     // Setup /slack/receive endpoint
@@ -42,18 +42,20 @@ controller.setupWebserver(process.env.PORT || 3000, function (err, webserver) {
             res.send('Success!')
         }
     })
-})
-
-controller.on("create_incoming_webhook", webhook => {
-    getBargains()
-})
-
-const getBargains = () => {
-    feed.load(OZBARGAIN_URL, (err, rss) => {
-        console.log(rss)
+    controller.storage.channels.all((err, allData) => {
+        allData.forEach(channel => 
+            subscriptions.push(new Subscription(channel, controller))
+        )
     })
-}
+})
 
-const sendBargains = (bargains) => {
-
-}
+controller.on("create_incoming_webhook", (bot, message) => {
+    const data = {
+        id: message.channel_id,
+        url: message.url,
+        lastBargain: -1
+    }
+    controller.storage.channels.save(data, err => {
+        subscriptions.push(new Subscription(data, controller))
+    })
+})
