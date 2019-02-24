@@ -19,7 +19,7 @@ class Subscription {
                 ]
             }
         })
-        this.schedule = schedule.scheduleJob("*/10 * * * *", () => {
+        this.schedule = schedule.scheduleJob("* * * * *", () => {
             this.getBargains()
         })
     }
@@ -64,7 +64,7 @@ class Subscription {
                 },
                 accessory: {
                     type: "image",
-                    image_url: bargain.thumbnail["$"].url,
+                    image_url: bargain.thumbnail ? bargain.thumbnail["$"].url : "http://skeletaltheme.neto.com.au/assets/na.gif",
                     alt_text: bargain.title
                 }
             },
