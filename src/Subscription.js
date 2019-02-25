@@ -1,7 +1,7 @@
 import Parser from 'rss-parser';
 import schedule from 'node-schedule'
 
-const OZBARGAIN_URL = "https://www.ozbargain.com.au/feed/deals"
+const OZBARGAIN_URL = "https://www.ozbargain.com.au/deals/feed"
 
 class Subscription {
     constructor(data, controller) {
@@ -13,10 +13,6 @@ class Subscription {
         })
         this.controller = controller
         this.parser = new Parser({
-            headers: {
-                "pragma": "no-cache",
-                "cache-control": "no-cache"
-            },
             customFields: {
                 item: [
                     ['media:thumbnail', 'thumbnail']
@@ -34,7 +30,8 @@ class Subscription {
                 rss => {
                     //Get a list of new bargains
                     const newBargains = rss.items.filter(bargain => {
-                        const guid = parseInt(bargain.guid.split(" ")[0])
+                        let guid = parseInt(bargain.guid.split(" ")[0])
+                        console.log(!this.data.bargains.includes(guid))
                         if (!this.data.bargains.includes(guid)) {
                             this.data.bargains.push(guid)
                             return true
@@ -43,7 +40,9 @@ class Subscription {
                     //Send bargains to Slack
                     this.sendBargains(newBargains)
                     //Save latest bargain to DB
-                    this.controller.storage.channels.save({ ...this.data, bargains: this.data.bargains })
+                    this.controller.storage.channels.save({ ...this.data, bargains: this.data.bargains }, function(error) {
+                        console.log(error)
+                    })
                 })
             .catch(
                 error => console.log(error)
