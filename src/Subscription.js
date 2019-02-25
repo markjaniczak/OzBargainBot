@@ -13,13 +13,17 @@ class Subscription {
         })
         this.controller = controller
         this.parser = new Parser({
+            headers: {
+                "pragma": "no-cache",
+                "cache-control": "no-cache"
+            },
             customFields: {
                 item: [
                     ['media:thumbnail', 'thumbnail']
                 ]
             }
         })
-        this.schedule = schedule.scheduleJob("* * * * *", () => {
+        this.schedule = schedule.scheduleJob("*/5 * * * *", () => {
             this.getBargains()
         })
     }
