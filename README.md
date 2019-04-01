@@ -1,5 +1,5 @@
-# BenaudBot
-A cricket commentary bot for slack.
+# OzBargainBot
+A bot for sending a simplified feed from ozbargain.com.au to slack
 
 ## Instructions
 
